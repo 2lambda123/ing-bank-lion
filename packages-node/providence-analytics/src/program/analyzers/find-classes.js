@@ -2,18 +2,22 @@
 const pathLib = require('path');
 const t = require('@babel/types');
 const { default: traverse } = require('@babel/traverse');
-const { Analyzer } = require('./helpers/Analyzer.js');
+const { Analyzer } = require('../core/Analyzer.js');
 const { trackDownIdentifierFromScope } = require('./helpers/track-down-identifier.js');
 const { aForEach } = require('../utils/async-array-utils.js');
 
-/** @typedef {import('../types/analyzers').FindClassesAnalyzerOutput} FindClassesAnalyzerOutput */
-/** @typedef {import('../types/analyzers').FindClassesAnalyzerOutputEntry} FindClassesAnalyzerOutputEntry */
-/** @typedef {import('../types/analyzers').FindClassesConfig} FindClassesConfig */
+/**
+ * @typedef {import('@babel/types').File} File
+ * @typedef {import('@babel/types').ClassMethod} ClassMethod
+ * @typedef {import('../types/analyzers').FindClassesAnalyzerOutput} FindClassesAnalyzerOutput
+ * @typedef {import('../types/analyzers').FindClassesAnalyzerOutputEntry} FindClassesAnalyzerOutputEntry
+ * @typedef {import('../types/analyzers').FindClassesConfig} FindClassesConfig
+ */
 
 /**
  * Finds import specifiers and sources
- * @param {BabelAst} ast
- * @param {string} relativePath the file being currently processed
+ * @param {File} ast
+ * @param {string} fullCurrentFilePath the file being currently processed
  */
 async function findMembersPerAstEntry(ast, fullCurrentFilePath, projectPath) {
   // The transformed entry
@@ -34,6 +38,10 @@ async function findMembersPerAstEntry(ast, fullCurrentFilePath, projectPath) {
     return 'public';
   }
 
+  /**
+   * @param {{node:ClassMethod}} cfg
+   * @returns
+   */
   function isStaticProperties({ node }) {
     return node.static && node.kind === 'get' && node.key.name === 'properties';
   }
@@ -73,7 +81,12 @@ async function findMembersPerAstEntry(ast, fullCurrentFilePath, projectPath) {
   //   return false;
   // }
 
-  async function traverseClass(path, { isMixin } = {}) {
+  /**
+   *
+   * @param {*} path
+   * @param {{isMixin?:boolean}} param1
+   */
+  async function traverseClass(path, { isMixin = false } = {}) {
     const classRes = {};
     classRes.name = path.node.id && path.node.id.name;
     classRes.isMixin = Boolean(isMixin);
@@ -202,9 +215,8 @@ async function findMembersPerAstEntry(ast, fullCurrentFilePath, projectPath) {
 // }
 
 class FindClassesAnalyzer extends Analyzer {
-  constructor() {
-    super();
-    this.name = 'find-classes';
+  static get analyzerName() {
+    return 'find-classes';
   }
 
   /**

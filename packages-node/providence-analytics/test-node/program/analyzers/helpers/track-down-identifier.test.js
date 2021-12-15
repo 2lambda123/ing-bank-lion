@@ -4,15 +4,19 @@ const {
   trackDownIdentifier,
   trackDownIdentifierFromScope,
 } = require('../../../../src/program/analyzers/helpers/track-down-identifier.js');
-const { AstService } = require('../../../../src/program/services/AstService.js');
-
+const { AstService } = require('../../../../src/program/core/AstService.js');
 const {
   mockProject,
   restoreMockedProjects,
 } = require('../../../../test-helpers/mock-project-helpers.js');
+const { GlobalConfig } = require('../../../../src/program/core/GlobalConfig.js');
 
 describe('trackdownIdentifier', () => {
+  beforeEach(() => {
+    GlobalConfig.cacheDisabled = true;
+  });
   afterEach(() => {
+    GlobalConfig.cacheDisabled = false;
     restoreMockedProjects();
   });
 
