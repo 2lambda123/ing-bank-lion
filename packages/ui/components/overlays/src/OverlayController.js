@@ -121,6 +121,9 @@ export class OverlayController extends EventTarget {
     /** @private */
     this.__sharedConfig = config;
 
+    /** @protected */
+    this._hasOpenChildOverlay = false;
+
     /** @private */
     this.__activeElementRightBeforeHide = null;
 
@@ -201,6 +204,8 @@ export class OverlayController extends EventTarget {
     this.__hasActiveBackdrop = true;
     /** @private */
     this.__escKeyHandler = this.__escKeyHandler.bind(this);
+    /** @private */
+    this.__outsideEscKeyHandler = this.__outsideEscKeyHandler.bind(this);
   }
 
   /**
@@ -294,7 +299,7 @@ export class OverlayController extends EventTarget {
   }
 
   /**
-   * Hides other overlays when mutiple are opened (currently exclusive to globalOverlayController)
+   * Hides other overlays when multiple are opened (currently exclusive to globalOverlayController)
    * @type {boolean}
    */
   get isBlocking() {
@@ -302,7 +307,7 @@ export class OverlayController extends EventTarget {
   }
 
   /**
-   * Hides other overlays when mutiple are opened (currently exclusive to globalOverlayController)
+   * Hides other overlays when multiple are opened (currently exclusive to globalOverlayController)
    * @type {boolean}
    */
   get preventsScroll() {
@@ -326,7 +331,7 @@ export class OverlayController extends EventTarget {
   }
 
   /**
-   * Hides the overlay when clicking next to it, exluding invoker
+   * Hides the overlay when clicking next to it, excluding invoker
    * @type {boolean}
    */
   get hidesOnOutsideClick() {
@@ -419,7 +424,7 @@ export class OverlayController extends EventTarget {
    * @param {number} value
    */
   set elevation(value) {
-    // @ts-expect-error find out why config would/could be undfined
+    // @ts-expect-error find out why config would/could be undefined
     this.__wrappingDialogNode.style.zIndex = `${this.config.zIndex + value}`;
   }
 
@@ -874,7 +879,7 @@ export class OverlayController extends EventTarget {
   }
 
   /**
-   * Method to be overriden by subclassers
+   * Method to be overridden by subclassers
    *
    * @param {{backdropNode:HTMLElement, contentNode:HTMLElement}} hideConfig
    */
@@ -1126,9 +1131,24 @@ export class OverlayController extends EventTarget {
     }
   }
 
-  /** @private */
-  __escKeyHandler(/** @type {KeyboardEvent} */ ev) {
-    return ev.key === 'Escape' && this.hide();
+  /**
+   * @param {KeyboardEvent} ev
+   * @private
+   */
+  __escKeyHandler(ev) {
+    if (ev.key === 'Escape' && !this._hasOpenChildOverlay) {
+      this.hide();
+    }
+  }
+
+  /**
+   * @param {KeyboardEvent} ev
+   * @private
+   */
+  __outsideEscKeyHandler(ev) {
+    if (ev.key === 'Escape') {
+      this.hide();
+    }
   }
 
   /**
@@ -1155,11 +1175,9 @@ export class OverlayController extends EventTarget {
    */
   _handleHidesOnOutsideEsc({ phase }) {
     if (phase === 'show') {
-      this.__escKeyHandler = (/** @type {KeyboardEvent} */ ev) =>
-        ev.key === 'Escape' && this.hide();
-      document.addEventListener('keyup', this.__escKeyHandler);
+      document.addEventListener('keyup', this.__outsideEscKeyHandler);
     } else if (phase === 'hide') {
-      document.removeEventListener('keyup', this.__escKeyHandler);
+      document.removeEventListener('keyup', this.__outsideEscKeyHandler);
     }
   }
 
