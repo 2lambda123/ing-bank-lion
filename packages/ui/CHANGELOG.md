@@ -1,5 +1,11 @@
 # @lion/ui
 
+## 0.5.7
+
+### Patch Changes
+
+- baa7a907: [input-file] add files more than once doesn't overwrite model value anymore
+
 ## 0.5.6
 
 ### Patch Changes
